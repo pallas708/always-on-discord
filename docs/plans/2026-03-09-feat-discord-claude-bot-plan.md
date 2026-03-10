@@ -113,8 +113,8 @@ Set up the project, install dependencies, and establish a working Discord websoc
 
 **Tasks:**
 
-- [ ] Initialize git repository
-- [ ] Create `.gitignore`:
+- [x] Initialize git repository
+- [x] Create `.gitignore`:
   ```
   .env
   memory.json
@@ -124,16 +124,16 @@ Set up the project, install dependencies, and establish a working Discord websoc
   .venv/
   node_modules/
   ```
-- [ ] Create Python virtual environment (`python3 -m venv .venv`)
-- [ ] Create `requirements.txt`:
+- [x] Create Python virtual environment (`python3 -m venv .venv`)
+- [x] Create `requirements.txt`:
   ```
   discord.py>=2.3
   pyyaml>=6.0
   python-dotenv>=1.0
   ```
-- [ ] Install Discord MCP server: `npm install -g mcp-discord` (or use `npx` at runtime)
-- [ ] Create `.env` with `DISCORD_BOT_TOKEN=<token>` (file permissions `chmod 600`)
-- [ ] Create `config.yaml`:
+- [x] Install Discord MCP server: `npm install -g mcp-discord` (or use `npx` at runtime)
+- [x] Create `.env` with `DISCORD_BOT_TOKEN=<token>` (file permissions `chmod 600`)
+- [x] Create `config.yaml`:
   ```yaml
   channels:
     - 1234567890  # channel IDs to monitor
@@ -147,7 +147,7 @@ Set up the project, install dependencies, and establish a working Discord websoc
   logging:
     level: INFO
   ```
-- [ ] Create `discord-mcp.json` (note: `DISCORD_TOKEN` is set via subprocess environment in `watcher.py`, not hardcoded here):
+- [x] Create `discord-mcp.json` (note: `DISCORD_TOKEN` is set via subprocess environment in `watcher.py`, not hardcoded here):
   ```json
   {
     "mcpServers": {
@@ -162,14 +162,14 @@ Set up the project, install dependencies, and establish a working Discord websoc
   }
   ```
   The actual token is injected by `watcher.py` setting `DISCORD_TOKEN` in the Claude subprocess's environment (loaded from `.env`). The MCP server inherits this env var.
-- [ ] Create initial `persona.md` with bot name, personality traits, tone, and engagement guidelines
-- [ ] Create initial `memory.json` as `{"users": {}, "channels": {}, "facts": []}`
-- [ ] Write minimal `watcher.py` that connects to Discord gateway, logs messages from configured channels, confirms the connection works
-- [ ] Verify system Python 3.9.6 works with `discord.py` 2.x
-- [ ] Verify Node.js/npm is installed (required for MCP server); install via Homebrew if missing
-- [ ] Verify `npx mcp-discord` launches correctly with bot token
-- [ ] **Verify `stream-json` input format**: run `claude --print --input-format stream-json --output-format stream-json` interactively and confirm the exact JSON schema for sending user messages via stdin. Document the format before proceeding to Phase 2.
-- [ ] **Verify MCP tool naming**: run `claude -p --mcp-config discord-mcp.json "list your available tools"` and confirm exact tool names (e.g., `mcp__discord__discord_send` vs `mcp__discord__send`)
+- [x] Create initial `persona.md` with bot name, personality traits, tone, and engagement guidelines
+- [x] Create initial `memory.json` as `{"users": {}, "channels": {}, "facts": []}`
+- [x] Write minimal `watcher.py` that connects to Discord gateway, logs messages from configured channels, confirms the connection works
+- [x] Verify system Python 3.9.6 works with `discord.py` 2.x
+- [x] Verify Node.js/npm is installed (required for MCP server); install via Homebrew if missing
+- [x] Verify `npx mcp-discord` launches correctly with bot token
+- [x] **Verify `stream-json` input format**: run `claude --print --input-format stream-json --output-format stream-json` interactively and confirm the exact JSON schema for sending user messages via stdin. Document the format before proceeding to Phase 2.
+- [x] **Verify MCP tool naming**: run `claude -p --mcp-config discord-mcp.json "list your available tools"` and confirm exact tool names (e.g., `mcp__discord__discord_send` vs `mcp__discord__send`)
 
 **Success criteria:** Python watcher connects to Discord and logs incoming messages. Discord MCP server starts and responds to tool calls. `stream-json` input format is documented. MCP tool names are confirmed.
 
@@ -179,7 +179,7 @@ Wire up the persistent Claude CLI process with stream-json I/O and Discord MCP t
 
 **Tasks:**
 
-- [ ] Implement Claude process manager in `watcher.py`:
+- [x] Implement Claude process manager in `watcher.py`:
   - Spawn Claude CLI as a persistent subprocess:
     ```python
     claude_proc = subprocess.Popen(
@@ -207,7 +207,7 @@ Wire up the persistent Claude CLI process with stream-json I/O and Discord MCP t
   - Monitor stdout for stream-json events (async reader on stdout pipe)
   - Monitor stderr for errors (async reader on stderr pipe)
   - Detect process death and auto-restart with backoff
-- [ ] Implement message forwarding in `watcher.py`:
+- [x] Implement message forwarding in `watcher.py`:
   - On `on_message` event from discord.py:
     - Guard: skip if `message.author == bot.user` or `message.author.bot`
     - Guard: skip if `message.type != discord.MessageType.default`
@@ -221,7 +221,7 @@ Wire up the persistent Claude CLI process with stream-json I/O and Discord MCP t
       }
       ```
   - Include whether the bot was directly `@mentioned` in the message content so Claude knows to always respond
-- [ ] Construct the system prompt (loaded once at Claude startup):
+- [x] Construct the system prompt (loaded once at Claude startup):
 
   ```
   {contents of persona.md}
@@ -258,7 +258,7 @@ Wire up the persistent Claude CLI process with stream-json I/O and Discord MCP t
   conversation text, nothing more.
   ```
 
-- [ ] Handle token injection for MCP server: `watcher.py` loads `.env` via `python-dotenv`, then passes `DISCORD_TOKEN` in the Claude subprocess's environment (`env` parameter in `Popen`). The MCP server inherits this env var at startup. No token is written to any file.
+- [x] Handle token injection for MCP server: `watcher.py` loads `.env` via `python-dotenv`, then passes `DISCORD_TOKEN` in the Claude subprocess's environment (`env` parameter in `Popen`). The MCP server inherits this env var at startup. No token is written to any file.
 
 **Success criteria:** Watcher receives a Discord message, forwards it to the persistent Claude process, Claude reads channel history via MCP, and sends a response via MCP `discord_send`. End-to-end flow works.
 
@@ -268,7 +268,7 @@ Add process health monitoring, context window management, and structured logging
 
 **Tasks:**
 
-- [ ] **Implement context rotation** — the most critical resilience feature:
+- [x] **Implement context rotation** — the most critical resilience feature:
   - The persistent Claude process accumulates every message in its context window. Without rotation, the context fills within hours in an active channel.
   - Strategy: track message count sent to Claude. After N messages (start with N=200, tune empirically), gracefully restart the Claude process:
     1. Close stdin (signals Claude to finish current work)
@@ -277,16 +277,16 @@ Add process health monitoring, context window management, and structured logging
     4. `memory.json` persists across restarts — this is the continuity mechanism
   - Also restart if the Claude process has been running for >6 hours (time-based fallback)
   - Log each rotation: `INFO [watcher] Context rotation after N messages`
-- [ ] Implement Claude process health monitoring in `watcher.py`:
+- [x] Implement Claude process health monitoring in `watcher.py`:
   - Async task that continuously reads Claude's stdout for stream-json events
   - Log tool use events (which MCP tools Claude calls, success/failure)
   - Detect unexpected process exit → log error → restart with exponential backoff (1s, 2s, 4s, max 30s)
   - Track consecutive restart count; if >5 restarts in 5 minutes, log CRITICAL and stop retrying
-- [ ] Implement message queue for Claude process downtime:
+- [x] Implement message queue for Claude process downtime:
   - If Claude process is restarting (planned rotation or crash recovery), buffer incoming messages (bounded deque, max 20)
   - Replay buffered messages after successful restart
   - Drop oldest if buffer full, log WARNING
-- [ ] Implement structured logging:
+- [x] Implement structured logging:
   - Format: `[ISO8601] [LEVEL] [component] message`
   - Components: `watcher`, `claude`, `mcp`
   - INFO: message received, message forwarded, Claude responded/skipped, context rotation
@@ -294,14 +294,14 @@ Add process health monitoring, context window management, and structured logging
   - ERROR: Claude process crash, MCP tool failure, Discord API error
   - CRITICAL: repeated Claude crashes, unrecoverable state
   - Log to stderr (captured by launchd)
-- [ ] Implement graceful shutdown:
+- [x] Implement graceful shutdown:
   - Handle SIGTERM: close Claude's stdin, wait up to 30s, then SIGKILL
   - Handle SIGINT: same as SIGTERM
-- [ ] Handle Discord reconnection logging: log disconnect/reconnect events
-- [ ] Ignore `on_message_edit` and DMs for v1 (documented limitations)
-- [ ] Memory backup: create `memory.json.bak` on watcher startup
-- [ ] Memory size monitoring: warn if `memory.json` exceeds 500KB
-- [ ] MCP tool scoping: explicitly list only the tools Claude needs in `--allowedTools` (no wildcards):
+- [x] Handle Discord reconnection logging: log disconnect/reconnect events
+- [x] Ignore `on_message_edit` and DMs for v1 (documented limitations)
+- [x] Memory backup: create `memory.json.bak` on watcher startup
+- [x] Memory size monitoring: warn if `memory.json` exceeds 500KB
+- [x] MCP tool scoping: explicitly list only the tools Claude needs in `--allowedTools` (no wildcards):
   - `mcp__discord__discord_send`
   - `mcp__discord__discord_read_messages`
   - `mcp__discord__discord_search_messages`
@@ -315,7 +315,7 @@ Configure macOS launchd for always-on operation.
 
 **Tasks:**
 
-- [ ] Create `com.pallas.discord-claude-bot.plist`:
+- [x] Create `com.pallas.discord-claude-bot.plist`:
   ```xml
   <?xml version="1.0" encoding="UTF-8"?>
   <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
@@ -351,8 +351,8 @@ Configure macOS launchd for always-on operation.
   </dict>
   </plist>
   ```
-- [ ] Create `logs/` directory, add to `.gitignore`
-- [ ] Create `scripts/install.sh`:
+- [x] Create `logs/` directory, add to `.gitignore`
+- [x] Create `scripts/install.sh`:
   ```bash
   #!/bin/bash
   set -e
@@ -365,17 +365,17 @@ Configure macOS launchd for always-on operation.
   launchctl load ~/Library/LaunchAgents/com.pallas.discord-claude-bot.plist
   echo "Bot installed and started."
   ```
-- [ ] Create `scripts/uninstall.sh`:
+- [x] Create `scripts/uninstall.sh`:
   ```bash
   #!/bin/bash
   launchctl unload ~/Library/LaunchAgents/com.pallas.discord-claude-bot.plist 2>/dev/null
   rm -f ~/Library/LaunchAgents/com.pallas.discord-claude-bot.plist
   echo "Bot stopped and uninstalled."
   ```
-- [ ] Test crash recovery: kill watcher process, verify launchd restarts within ~10s
-- [ ] Test Claude subprocess crash: kill claude process, verify watcher detects and restarts it
-- [ ] Test machine sleep/wake: verify Discord websocket reconnects after macOS sleep (note: bot will be offline during sleep — laptop limitation)
-- [ ] Verify `claude` CLI is discoverable in launchd's PATH (the plist includes `/Users/pallas/.local/bin`)
+- [ ] Test crash recovery: kill watcher process, verify launchd restarts within ~10s (requires live test after install)
+- [ ] Test Claude subprocess crash: kill claude process, verify watcher detects and restarts it (requires live test)
+- [ ] Test machine sleep/wake: verify Discord websocket reconnects after macOS sleep (requires live test)
+- [x] Verify `claude` CLI is discoverable in launchd's PATH (the plist includes `/Users/pallas/.local/bin`)
 
 **Success criteria:** Bot auto-starts on login, auto-restarts after crash, logs written to `logs/`. Install/uninstall is scripted.
 

@@ -6,6 +6,16 @@ node_modules/
 .env.*
 !.env.example
 
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Runtime
+memory.json
+memory.json.bak
+logs/
+
 # OS
 .DS_Store
 

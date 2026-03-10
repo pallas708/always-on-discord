@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.pallas.discord-claude-bot</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/pallas/Documents/always_on_discord/.venv/bin/python3</string>
+    <string>/Users/pallas/Documents/always_on_discord/watcher.py</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/pallas/Documents/always_on_discord</string>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/Users/pallas/Documents/always_on_discord/logs/bot.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/pallas/Documents/always_on_discord/logs/bot.err</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/Users/pallas/.local/bin:/usr/local/bin:/usr/bin:/bin</string>
+    <key>HOME</key>
+    <string>/Users/pallas</string>
+  </dict>
+  <key>ThrottleInterval</key>
+  <integer>10</integer>
+</dict>
+</plist>

@@ -1,0 +1,14 @@
+channels:
+  - 1480585939687313549  # pallas/#general
+
+claude:
+  path: /Users/pallas/.local/bin/claude
+  max_turns: 10  # safety limit per message evaluation
+
+paths:
+  persona: persona.md
+  memory: memory.json
+  mcp_config: discord-mcp.json
+
+logging:
+  level: INFO
