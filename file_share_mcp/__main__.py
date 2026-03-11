@@ -10,6 +10,7 @@ import tempfile
 from pathlib import Path
 
 import yaml
+from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP, Context
 from mcp.server.fastmcp.exceptions import ToolError
 
@@ -30,11 +31,15 @@ from .security import (
 # Server setup
 # ---------------------------------------------------------------------------
 
-mcp = FastMCP("FileSharing", mask_error_details=True)
+mcp = FastMCP("FileSharing")
 
 # Config loaded from environment variables set in discord-mcp.json
 _config_path = os.environ.get("FILE_SHARE_CONFIG", "config.yaml")
 _project_root = Path(os.environ.get("FILE_SHARE_PROJECT_ROOT", Path(__file__).resolve().parent.parent))
+
+# Load .env from project root for DISCORD_BOT_TOKEN
+# (MCP config env sets DISCORD_TOKEN="" which overwrites the real token)
+load_dotenv(Path(_project_root) / ".env")
 
 _raw_config = yaml.safe_load(Path(_config_path).read_text())
 CONFIG = FileSharingConfig.from_config(_raw_config, Path(_project_root))
@@ -45,8 +50,8 @@ CONFIG.temp_dir.mkdir(mode=0o700, exist_ok=True)
 # Rate limiter instance
 _rate_limiter = RateLimiter(max_global=10, max_per_channel=5, window_seconds=60.0)
 
-# Discord bot token
-_discord_token = os.environ.get("DISCORD_TOKEN", "")
+# Discord bot token — loaded from .env (DISCORD_BOT_TOKEN)
+_discord_token = os.environ.get("DISCORD_BOT_TOKEN", "")
 
 # Module-level aiohttp session (lazy init in upload function)
 
