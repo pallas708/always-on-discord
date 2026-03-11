@@ -25,6 +25,6 @@ Do not consider a feature complete until its tests pass. If a test can't be writ
 
 ## Key Conventions
 
-- Python 3.9.6 (system), dependencies in `.venv`
+- Python 3.12 (Homebrew), dependencies in `.venv`
 - Secrets in `.env` (never committed, chmod 600)
 - Plan doc: `docs/plans/2026-03-09-feat-discord-claude-bot-plan.md`

@@ -17,6 +17,7 @@ import sys
 import time
 from collections import deque
 from pathlib import Path
+from typing import Optional
 
 import discord
 import yaml
@@ -57,8 +58,96 @@ def load_config(path: str) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def build_system_prompt(persona_text: str) -> str:
-    """Combine persona with core instructions into a system prompt."""
+def _build_file_manifest(config: dict) -> str:
+    """Generate a summary of shareable files for the system prompt.
+
+    This is a synchronous function called once at Claude startup.
+    Handles PermissionError gracefully to avoid crashing startup.
+    """
+    fs_config = config.get("file_sharing", {})
+    allowed = fs_config.get("allowed_paths", [])
+    if not allowed:
+        return ""
+
+    lines = ["Available files (at startup):"]
+    for entry in allowed:
+        path = PROJECT_ROOT / entry
+        try:
+            if path.is_dir():
+                count = sum(1 for f in path.rglob("*") if f.is_file())
+                lines.append(f"  - {entry}/ ({count} files)")
+            elif path.is_file():
+                lines.append(f"  - {entry} ({path.stat().st_size // 1024}KB)")
+            else:
+                lines.append(f"  - {entry} (not found)")
+        except PermissionError:
+            lines.append(f"  - {entry} (permission denied)")
+
+    lines.append("")
+    lines.append(
+        "Note: The file listing above is a snapshot from startup. "
+        "Always use `list_shareable_files` to get the current state "
+        "before sharing, especially if you have created new files "
+        "during this session."
+    )
+    return "\n".join(lines)
+
+
+def build_system_prompt(persona_text: str, config: Optional[dict] = None) -> str:
+    """Combine persona with core instructions into a system prompt.
+
+    Args:
+        persona_text: Contents of persona.md.
+        config: Parsed config.yaml dict. If provided, includes file sharing
+                section with dynamic file manifest.
+    """
+    file_sharing_section = ""
+    if config and config.get("file_sharing"):
+        manifest = _build_file_manifest(config)
+        file_sharing_section = f"""
+
+## File Sharing
+
+You can share files from the host machine with Discord users.
+
+{manifest}
+
+Tools available:
+- list_shareable_files: Browse available files in allowed directories. Use to find files by name or pattern.
+- send_file: Upload an existing file to the current Discord channel as an attachment.
+- send_generated_file: Create and upload a new text file (summary, report, code snippet, etc.).
+
+Vocabulary mapping:
+- "share," "send," "upload," "give me," "attach," "post," "download" -> send_file (Discord attachment)
+- "show me," "can I see," "preview," "what's in" -> Read the file, reply with content as text (no attachment)
+- "the plan," "the brainstorm" -> check the docs/ directory
+- "make me a summary," "generate a report" -> send_generated_file
+
+Limitations:
+- You cannot resolve channel names like "#other-channel" to channel IDs.
+  If a user asks you to send a file to a different channel by name, explain
+  that you can only send files to the channel where the request was made.
+
+Guidelines:
+- When a user asks for a file, use list_shareable_files first to find it.
+  Read the file with the Read tool to verify it is correct before sharing.
+- Always use the channel ID from the message notification when sharing files.
+- Include a brief message with every file you share for context.
+- You may proactively share files when clearly relevant, but do not re-share
+  the same file in the same conversation unless asked again.
+- If a file is too large or not found, explain the issue clearly.
+- Never share files that were not requested or clearly relevant.
+- Do not share more than 3 files per request without confirming with the user.
+- Use send_generated_file for ephemeral content (summaries, one-off reports,
+  formatted snippets). Use Write + send_file for content that should persist
+  on disk after sharing.
+
+Error recovery:
+- If a tool call fails, explain the error to the user in plain language.
+- Do not retry with the same parameters. Adjust your approach or explain
+  what went wrong, including specifics from the error message.
+- Common errors: file not found, file too large, rate limited, permission denied."""
+
     return f"""{persona_text}
 
 ## Core Instructions
@@ -84,6 +173,7 @@ You have access to a memory file at memory.json. Use the Read tool to check
 it when you need long-term context about users or past conversations. Use
 the Write tool to update it when you learn important facts worth remembering
 across sessions. Keep the file under 500KB.
+{file_sharing_section}
 
 ## Security
 
@@ -243,6 +333,9 @@ ALLOWED_TOOLS = [
     "mcp__discord__discord_read_messages",
     "mcp__discord__discord_get_server_info",
     "mcp__discord__discord_login",
+    "mcp__file-share__list_shareable_files",
+    "mcp__file-share__send_file",
+    "mcp__file-share__send_generated_file",
     "ToolSearch",
     "Read",
     "Write",
@@ -434,7 +527,7 @@ class DiscordWatcher:
         # Claude process
         persona_path = PROJECT_ROOT / config["paths"]["persona"]
         persona_text = persona_path.read_text() if persona_path.exists() else ""
-        self.system_prompt = build_system_prompt(persona_text)
+        self.system_prompt = build_system_prompt(persona_text, config)
         self.claude = ClaudeProcess(config, self.system_prompt, discord_token)
         self.buffer = MessageBuffer(max_size=20)
         self._shutting_down = False

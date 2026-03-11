@@ -15,6 +15,7 @@ __pycache__/
 memory.json
 memory.json.bak
 logs/
+tmp/
 
 # OS
 .DS_Store

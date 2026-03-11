@@ -6,6 +6,16 @@
       "env": {
         "DISCORD_TOKEN": ""
       }
+    },
+    "file-share": {
+      "command": "/Users/pallas/Documents/always_on_discord/.venv/bin/python",
+      "args": ["-m", "file_share_mcp"],
+      "env": {
+        "DISCORD_TOKEN": "",
+        "FILE_SHARE_CONFIG": "/Users/pallas/Documents/always_on_discord/config.yaml",
+        "FILE_SHARE_PROJECT_ROOT": "/Users/pallas/Documents/always_on_discord",
+        "PYTHONUNBUFFERED": "1"
+      }
     }
   }
 }

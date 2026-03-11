@@ -58,6 +58,127 @@ class TestSystemPrompt(unittest.TestCase):
         prompt = build_system_prompt("Test persona")
         assert "untrusted" in prompt.lower() or "security" in prompt.lower()
 
+    def test_build_system_prompt_no_config(self):
+        """build_system_prompt works without config (backward compatible)."""
+        from watcher import build_system_prompt
+        prompt = build_system_prompt("Test persona")
+        assert "## File Sharing" not in prompt
+
+    def test_build_system_prompt_with_file_sharing_config(self):
+        """build_system_prompt includes file sharing section when config provided."""
+        from watcher import build_system_prompt
+        config = {
+            "file_sharing": {
+                "allowed_paths": ["docs", "persona.md"],
+            }
+        }
+        prompt = build_system_prompt("Test persona", config)
+        assert "## File Sharing" in prompt
+        assert "list_shareable_files" in prompt
+        assert "send_file" in prompt
+        assert "send_generated_file" in prompt
+
+    def test_build_system_prompt_file_sharing_between_memory_and_security(self):
+        """File sharing section must appear between Memory and Security sections."""
+        from watcher import build_system_prompt
+        config = {
+            "file_sharing": {
+                "allowed_paths": ["docs"],
+            }
+        }
+        prompt = build_system_prompt("Test persona", config)
+        memory_pos = prompt.index("## Memory")
+        file_sharing_pos = prompt.index("## File Sharing")
+        security_pos = prompt.index("## Security")
+        assert memory_pos < file_sharing_pos < security_pos
+
+    def test_build_system_prompt_stale_manifest_disclaimer(self):
+        """System prompt includes staleness disclaimer for file manifest."""
+        from watcher import build_system_prompt
+        config = {
+            "file_sharing": {
+                "allowed_paths": ["docs"],
+            }
+        }
+        prompt = build_system_prompt("Test persona", config)
+        assert "snapshot from startup" in prompt
+        assert "list_shareable_files" in prompt
+
+    def test_build_system_prompt_vocabulary_mapping(self):
+        """System prompt includes expanded vocabulary for preview vs share."""
+        from watcher import build_system_prompt
+        config = {
+            "file_sharing": {
+                "allowed_paths": ["docs"],
+            }
+        }
+        prompt = build_system_prompt("Test persona", config)
+        # Preview synonyms
+        assert "show me" in prompt
+        assert "preview" in prompt
+        # Share synonyms
+        assert "attach" in prompt
+        assert "post" in prompt
+
+    def test_build_system_prompt_error_recovery(self):
+        """System prompt includes error recovery guidance."""
+        from watcher import build_system_prompt
+        config = {
+            "file_sharing": {
+                "allowed_paths": ["docs"],
+            }
+        }
+        prompt = build_system_prompt("Test persona", config)
+        assert "Error recovery" in prompt
+        assert "plain language" in prompt
+
+    def test_build_system_prompt_channel_limitation(self):
+        """System prompt documents channel name resolution limitation."""
+        from watcher import build_system_prompt
+        config = {
+            "file_sharing": {
+                "allowed_paths": ["docs"],
+            }
+        }
+        prompt = build_system_prompt("Test persona", config)
+        assert "cannot resolve channel names" in prompt
+
+
+class TestFileManifest(unittest.TestCase):
+    """Test dynamic file manifest generation."""
+
+    def test_build_file_manifest_empty_config(self):
+        from watcher import _build_file_manifest
+        result = _build_file_manifest({})
+        assert result == ""
+
+    def test_build_file_manifest_no_allowed_paths(self):
+        from watcher import _build_file_manifest
+        result = _build_file_manifest({"file_sharing": {"allowed_paths": []}})
+        assert result == ""
+
+    def test_build_file_manifest_with_directory(self):
+        from watcher import _build_file_manifest
+        # docs/ exists in the project
+        config = {"file_sharing": {"allowed_paths": ["docs"]}}
+        result = _build_file_manifest(config)
+        assert "docs/" in result
+        assert "files)" in result
+
+    def test_build_file_manifest_with_file(self):
+        from watcher import _build_file_manifest
+        # persona.md exists in the project
+        config = {"file_sharing": {"allowed_paths": ["persona.md"]}}
+        result = _build_file_manifest(config)
+        assert "persona.md" in result
+        assert "KB)" in result
+
+    def test_build_file_manifest_nonexistent_path(self):
+        from watcher import _build_file_manifest
+        config = {"file_sharing": {"allowed_paths": ["nonexistent_dir"]}}
+        result = _build_file_manifest(config)
+        assert "not found" in result
+
 
 class TestMessageFormatting(unittest.TestCase):
     """Test formatting Discord messages as stream-json for Claude stdin."""
