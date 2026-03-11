@@ -3,7 +3,7 @@ channels:
 
 claude:
   path: /Users/pallas/.local/bin/claude
-  max_turns: 10  # safety limit per message evaluation
+  max_turns: 25  # safety limit per message evaluation
 
 paths:
   persona: persona.md
