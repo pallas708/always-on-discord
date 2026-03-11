@@ -10,5 +10,25 @@ paths:
   memory: memory.json
   mcp_config: discord-mcp.json
 
+file_sharing:
+  allowed_paths:        # accepts both directories and individual files
+    - docs              # relative to project root
+    - persona.md        # individual files also allowed
+    - derivative.pdf
+    - derivatives.pdf
+  max_file_size_mb: 10
+  denied_files:         # fnmatch patterns, matched against basename only
+    - .env
+    - ".env.*"
+    - memory.json
+    - memory.json.bak
+    - discord-mcp.json
+    - config.yaml
+    - "*.key"
+    - "*.pem"
+    - "*.p12"
+    - "*.pfx"
+    - "*.plist"
+
 logging:
   level: INFO
